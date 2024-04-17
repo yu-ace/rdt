@@ -1,9 +1,9 @@
-package zone.yukai.RDT;
+package zone.yukai.rdt;
 
-import zone.yukai.RDT.common.Column;
-import zone.yukai.RDT.common.ConfigItem;
-import zone.yukai.RDT.common.IWriter;
-import zone.yukai.RDT.common.Row;
+import zone.yukai.rdt.common.Column;
+import zone.yukai.rdt.common.ConfigItem;
+import zone.yukai.rdt.common.IWriter;
+import zone.yukai.rdt.common.Row;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

@@ -1,9 +1,9 @@
-package zone.yukai.RDT;
+package zone.yukai.rdt;
 
-import zone.yukai.RDT.common.Column;
-import zone.yukai.RDT.common.ConfigItem;
-import zone.yukai.RDT.common.IReader;
-import zone.yukai.RDT.common.Row;
+import zone.yukai.rdt.common.Column;
+import zone.yukai.rdt.common.ConfigItem;
+import zone.yukai.rdt.common.IReader;
+import zone.yukai.rdt.common.Row;
 
 import java.sql.*;
 import java.util.ArrayList;

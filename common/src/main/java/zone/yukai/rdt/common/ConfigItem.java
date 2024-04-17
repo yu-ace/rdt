@@ -1,4 +1,4 @@
-package zone.yukai.RDT.common;
+package zone.yukai.rdt.common;
 
 public class ConfigItem {
 

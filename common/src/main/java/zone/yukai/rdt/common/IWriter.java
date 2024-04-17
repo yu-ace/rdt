@@ -1,11 +1,11 @@
-package zone.yukai.RDT.common;
+package zone.yukai.rdt.common;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public interface IReader {
+public interface IWriter {
     void init(Map<String,Object> setting);
-    void read(LinkedBlockingQueue channel);
+    void write(LinkedBlockingQueue<Row> channel);
     List<ConfigItem> getConfigItems();
 }
