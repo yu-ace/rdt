@@ -1,9 +1,9 @@
-package zone.yukai.rapidDataTransfer;
+package zone.yukai.RDT;
 
-import zone.yukai.rapidDataTransfer.common.Column;
-import zone.yukai.rapidDataTransfer.common.ConfigItem;
-import zone.yukai.rapidDataTransfer.common.IReader;
-import zone.yukai.rapidDataTransfer.common.Row;
+import zone.yukai.RDT.common.Column;
+import zone.yukai.RDT.common.ConfigItem;
+import zone.yukai.RDT.common.IReader;
+import zone.yukai.RDT.common.Row;
 
 import java.sql.*;
 import java.util.*;

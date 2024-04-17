@@ -1,4 +1,4 @@
-package zone.yukai.rapidDataTransfer.common;
+package zone.yukai.RDT.common;
 
 public class ConfigItem {
 

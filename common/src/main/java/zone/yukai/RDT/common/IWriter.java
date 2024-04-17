@@ -1,4 +1,4 @@
-package zone.yukai.rapidDataTransfer.common;
+package zone.yukai.RDT.common;
 
 import java.util.List;
 import java.util.Map;

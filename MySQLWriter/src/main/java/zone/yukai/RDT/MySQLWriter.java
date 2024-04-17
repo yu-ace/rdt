@@ -1,9 +1,9 @@
-package zone.yukai.rapidDataTransfer;
+package zone.yukai.RDT;
 
-import zone.yukai.rapidDataTransfer.common.Column;
-import zone.yukai.rapidDataTransfer.common.ConfigItem;
-import zone.yukai.rapidDataTransfer.common.IWriter;
-import zone.yukai.rapidDataTransfer.common.Row;
+import zone.yukai.RDT.common.Column;
+import zone.yukai.RDT.common.ConfigItem;
+import zone.yukai.RDT.common.IWriter;
+import zone.yukai.RDT.common.Row;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -14,19 +14,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class PostgresWriter implements IWriter {
-    String postgresUrl;
-    String postgresUsername;
-    String postgresPassword;
+public class MySQLWriter implements IWriter {
+
+    String mySQLUrl;
+    String mySQLrUsername;
+    String mySQLPassword;
     String tableName;
     @Override
     public void init(Map<String, Object> setting) {
         Set<String> strings = setting.keySet();
         List<String> configList = new ArrayList<>(strings);
-        postgresUrl = (String) ((Map<String, Object>) setting.get(configList.get(1))).get("url");
-        postgresUsername = (String) ((Map<String, Object>) setting.get(configList.get(1))).get("username");
-        postgresPassword = (String) ((Map<String, Object>) setting.get(configList.get(1))).get("password");
-        tableName = (String) ((Map<String, Object>) setting.get(configList.get(1))).get("tableName");
+        mySQLUrl = (String) ((Map<String, Object>) setting.get(configList.get(0))).get("url");
+        mySQLrUsername = (String) ((Map<String, Object>) setting.get(configList.get(0))).get("username");
+        mySQLPassword = (String) ((Map<String, Object>) setting.get(configList.get(0))).get("password");
+        tableName = (String) ((Map<String, Object>) setting.get(configList.get(0))).get("tableName");
     }
 
     @Override
@@ -49,16 +50,16 @@ public class PostgresWriter implements IWriter {
                             columnValue.append(value);
                             break;
                         case "VARCHAR":
-                            columnValue.append("\""+value+"\"");
+                            columnValue.append("\""+value+"\"");;
                             break;
                         case "varchar":
-                            columnValue.append("\""+value+"\"");
+                            columnValue.append("\""+value+"\"");;
                             break;
                         case "INT":
                             columnValue.append(value);
                             break;
                         case "TIMESTAMP":
-                            columnValue.append("\""+value+"\"");
+                            columnValue.append("\""+value+"\"");;
                             break;
                         default:
                             columnValue.append(columnList.get(i).getValue());
@@ -69,7 +70,7 @@ public class PostgresWriter implements IWriter {
                     }
                 }
                 String sql = "INSERT INTO " + tableName + "("+columnName.toString()+")values("+columnValue.toString()+");";
-                Connection connection = DriverManager.getConnection(postgresUrl, postgresUsername, postgresPassword);
+                Connection connection = DriverManager.getConnection(mySQLUrl, mySQLrUsername, mySQLPassword);
                 PreparedStatement preparedStatement = connection.prepareStatement(sql);
                 preparedStatement.execute();
 
@@ -84,10 +85,10 @@ public class PostgresWriter implements IWriter {
     @Override
     public List<ConfigItem> getConfigItems() {
         List<ConfigItem> items = new ArrayList<>();
-        items.add(new ConfigItem("POSTGRES.URL","string","url"));
-        items.add(new ConfigItem("POSTGRES.USERNAME","string","用户名"));
-        items.add(new ConfigItem("POSTGRES.PASSWORD","string","密码"));
-        items.add(new ConfigItem("POSTGRES.TABLE_NAME","string","表名"));
+        items.add(new ConfigItem("MYSQL.URL","string","url"));
+        items.add(new ConfigItem("MYSQL.USERNAME","string","用户名"));
+        items.add(new ConfigItem("MYSQL.PASSWORD","string","密码"));
+        items.add(new ConfigItem("MYSQL.TABLE_NAME","String","表名"));
         return items;
     }
 }
