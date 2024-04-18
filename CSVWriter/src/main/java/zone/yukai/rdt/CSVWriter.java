@@ -13,21 +13,21 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class CSVWriter implements IWriter {
-    String tableName;
+    String csvPath;
     boolean isFirst = true;
     @Override
     public void init(Map<String, Object> setting) {
         Iterator<String> iterator = setting.keySet().iterator();
         iterator.next();
+        iterator.next();
         String key = iterator.next();
         Map<String, Object> config = (Map<String, Object>) setting.get(key);
-        tableName = (String) config.get("tableName");
-        tableName = "D:\\tmp\\output.csv";
+        csvPath = (String) config.get("path");
     }
 
     @Override
     public void write(LinkedBlockingQueue<Row> channel, BlockingQueue<String> status) throws Exception {
-        FileWriter fileWriter = new FileWriter(tableName);
+        FileWriter fileWriter = new FileWriter(csvPath);
 
         while (true){
             Row row = channel.take();
