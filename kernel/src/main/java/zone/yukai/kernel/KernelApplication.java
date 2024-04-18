@@ -53,8 +53,8 @@ public class KernelApplication implements CommandLineRunner {
 
         Thread writerThread = new Thread(()->{
             try {
-                Class<?> aClass1 = urlClassLoader.loadClass(writerLoadClass);
-                IWriter writer = (IWriter) aClass1.getDeclaredConstructor().newInstance();
+                Class<?> aClass = urlClassLoader.loadClass(writerLoadClass);
+                IWriter writer = (IWriter) aClass.getDeclaredConstructor().newInstance();
                 writer.init(setting);
                 writer.write(channel,status);
             } catch (Exception e) {
