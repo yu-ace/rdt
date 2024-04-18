@@ -7,29 +7,33 @@ import zone.yukai.rdt.common.Row;
 
 import java.sql.*;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MySQLReader implements IReader {
-
     String mySQLUrl;
-    String mySQLrUsername;
+    String mySQLUsername;
     String mySQLPassword;
     String tableName;
+    Connection connection;
     @Override
-    public void init(Map<String, Object> setting) {
-        Set<String> strings = setting.keySet();
-        List<String> configList = new ArrayList<>(strings);
-        mySQLUrl = (String) ((Map<String, Object>) setting.get(configList.get(0))).get("url");
-        mySQLrUsername = (String) ((Map<String, Object>) setting.get(configList.get(0))).get("username");
-        mySQLPassword = (String) ((Map<String, Object>) setting.get(configList.get(0))).get("password");
-        tableName = (String) ((Map<String, Object>) setting.get(configList.get(0))).get("tableName");
+    public void init(Map<String, Object> setting) throws SQLException {
+        String key = setting.keySet().iterator().next();
+        Map<String, Object> config = (Map<String, Object>) setting.get(key);
+        mySQLUrl = (String) config.get("url");
+        mySQLUsername = (String) config.get("username");
+        mySQLPassword = (String) config.get("password");
+        tableName = (String) config.get("tableName");
+        connection = DriverManager.getConnection(mySQLUrl, mySQLUsername, mySQLPassword);
     }
 
     @Override
-    public void read(LinkedBlockingQueue channel) {
+    public void read(LinkedBlockingQueue<Row> channel, String condition, BlockingQueue<String> status) {
         try {
             String sql = "SELECT * FROM " + tableName;
-            Connection connection = DriverManager.getConnection(mySQLUrl, mySQLrUsername, mySQLPassword);
+            if(condition != null){
+                sql = "SELECT * FROM " + tableName + " WHERE " + condition;
+            }
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()){
@@ -61,6 +65,7 @@ public class MySQLReader implements IReader {
                 channel.put(row);
                 System.out.println("读到一行数据");
             }
+            status.put("READ_OVER");
             connection.close();
             preparedStatement.close();
             resultSet.close();
@@ -70,6 +75,7 @@ public class MySQLReader implements IReader {
         System.out.println("finish");
     }
 
+
     @Override
     public List<ConfigItem> getConfigItems() {
         List<ConfigItem> items = new ArrayList<>();
@@ -77,6 +83,7 @@ public class MySQLReader implements IReader {
         items.add(new ConfigItem("MYSQL.USERNAME","string","用户名"));
         items.add(new ConfigItem("MYSQL.PASSWORD","string","密码"));
         items.add(new ConfigItem("MYSQL.TABLE_NAME","String","表名"));
+        items.add(new ConfigItem("MYSQL.WHERE","String","查询语句"));
         return items;
     }
 }

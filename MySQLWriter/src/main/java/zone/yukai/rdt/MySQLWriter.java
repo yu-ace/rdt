@@ -8,30 +8,33 @@ import zone.yukai.rdt.common.Row;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MySQLWriter implements IWriter {
-
     String mySQLUrl;
-    String mySQLrUsername;
+    String mySQLUsername;
     String mySQLPassword;
     String tableName;
+    Connection connection;
     @Override
-    public void init(Map<String, Object> setting) {
-        Set<String> strings = setting.keySet();
-        List<String> configList = new ArrayList<>(strings);
-        mySQLUrl = (String) ((Map<String, Object>) setting.get(configList.get(0))).get("url");
-        mySQLrUsername = (String) ((Map<String, Object>) setting.get(configList.get(0))).get("username");
-        mySQLPassword = (String) ((Map<String, Object>) setting.get(configList.get(0))).get("password");
-        tableName = (String) ((Map<String, Object>) setting.get(configList.get(0))).get("tableName");
+    public void init(Map<String, Object> setting) throws SQLException {
+        String key = setting.keySet().iterator().next();
+        Map<String, Object> config = (Map<String, Object>) setting.get(key);
+        mySQLUrl = (String) config.get("url");
+        mySQLUsername = (String) config.get("username");
+        mySQLPassword = (String) config.get("password");
+        tableName = (String) config.get("tableName");
+        connection = DriverManager.getConnection(mySQLUrl, mySQLUsername, mySQLPassword);
     }
 
     @Override
-    public void write(LinkedBlockingQueue<Row> channel) {
+    public void write(LinkedBlockingQueue<Row> channel, BlockingQueue<String> status) {
         while (true){
             try {
                 Row row = channel.take();
@@ -50,16 +53,16 @@ public class MySQLWriter implements IWriter {
                             columnValue.append(value);
                             break;
                         case "VARCHAR":
-                            columnValue.append("\""+value+"\"");;
+                            columnValue.append("\""+value+"\"");
                             break;
                         case "varchar":
-                            columnValue.append("\""+value+"\"");;
+                            columnValue.append("\""+value+"\"");
                             break;
                         case "INT":
                             columnValue.append(value);
                             break;
                         case "TIMESTAMP":
-                            columnValue.append("\""+value+"\"");;
+                            columnValue.append("\""+value+"\"");
                             break;
                         default:
                             columnValue.append(columnList.get(i).getValue());
@@ -70,12 +73,16 @@ public class MySQLWriter implements IWriter {
                     }
                 }
                 String sql = "INSERT INTO " + tableName + "("+columnName.toString()+")values("+columnValue.toString()+");";
-                Connection connection = DriverManager.getConnection(mySQLUrl, mySQLrUsername, mySQLPassword);
                 PreparedStatement preparedStatement = connection.prepareStatement(sql);
                 preparedStatement.execute();
-
-                connection.close();
                 preparedStatement.close();
+                if(channel.size() == 0){
+                    if("READER_OVER".equals(status.take())){
+                        connection.close();
+                        break;
+                    }
+                    break;
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -89,6 +96,7 @@ public class MySQLWriter implements IWriter {
         items.add(new ConfigItem("MYSQL.USERNAME","string","用户名"));
         items.add(new ConfigItem("MYSQL.PASSWORD","string","密码"));
         items.add(new ConfigItem("MYSQL.TABLE_NAME","String","表名"));
+        items.add(new ConfigItem("MYSQL.WHERE","String","查询语句"));
         return items;
     }
 }

@@ -15,6 +15,7 @@
         <module>PgReader</module>
         <module>PgWriter</module>
         <module>kernel</module>
+        <module>CSVWriter</module>
     </modules>
 
     <properties>

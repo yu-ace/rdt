@@ -6,33 +6,36 @@ import zone.yukai.rdt.common.IReader;
 import zone.yukai.rdt.common.Row;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class PostgresReader implements IReader {
-
     String postgresUrl;
     String postgresUsername;
     String postgresPassword;
     String tableName;
+    Connection connection;
     @Override
-    public void init(Map<String, Object> setting) {
-        Set<String> strings = setting.keySet();
-        List<String> configList = new ArrayList<>(strings);
-        postgresUrl = (String) ((Map<String, Object>) setting.get(configList.get(1))).get("url");
-        postgresUsername = (String) ((Map<String, Object>) setting.get(configList.get(1))).get("username");
-        postgresPassword = (String) ((Map<String, Object>) setting.get(configList.get(1))).get("password");
-        tableName = (String) ((Map<String, Object>) setting.get(configList.get(1))).get("tableName");
+    public void init(Map<String, Object> setting) throws SQLException {
+        Iterator<String> iterator = setting.keySet().iterator();
+        iterator.next();
+        String key = iterator.next();
+        Map<String, Object> config = (Map<String, Object>) setting.get(key);
+        postgresUrl = (String) config.get("url");
+        postgresUsername = (String) config.get("username");
+        postgresPassword = (String) config.get("password");
+        tableName = (String) config.get("tableName");
+        connection = DriverManager.getConnection(postgresUrl, postgresUsername, postgresPassword);
     }
 
     @Override
-    public void read(LinkedBlockingQueue channel) {
+    public void read(LinkedBlockingQueue<Row> channel, String condition, BlockingQueue<String> status) {
         try {
             String sql = "SELECT * FROM " + tableName;
-            Connection connection = DriverManager.getConnection(postgresUrl, postgresUsername, postgresPassword);
+            if(condition != null){
+                sql = "SELECT * FROM " + tableName + " WHERE " + condition;
+            }
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()){
@@ -64,6 +67,7 @@ public class PostgresReader implements IReader {
                 channel.put(row);
                 System.out.println("读到一行数据");
             }
+            status.put("READ_OVER");
             connection.close();
             preparedStatement.close();
             resultSet.close();
@@ -76,10 +80,11 @@ public class PostgresReader implements IReader {
     @Override
     public List<ConfigItem> getConfigItems() {
         List<ConfigItem> items = new ArrayList<>();
-        items.add(new ConfigItem("POSTGRES.URL","string","url"));
-        items.add(new ConfigItem("POSTGRES.USERNAME","string","用户名"));
-        items.add(new ConfigItem("POSTGRES.PASSWORD","string","密码"));
-        items.add(new ConfigItem("POSTGRES.TABLE_NAME","string","表名"));
+        items.add(new ConfigItem("MYSQL.URL","string","url"));
+        items.add(new ConfigItem("MYSQL.USERNAME","string","用户名"));
+        items.add(new ConfigItem("MYSQL.PASSWORD","string","密码"));
+        items.add(new ConfigItem("MYSQL.TABLE_NAME","String","表名"));
+        items.add(new ConfigItem("MYSQL.WHERE","String","查询语句"));
         return items;
     }
 }

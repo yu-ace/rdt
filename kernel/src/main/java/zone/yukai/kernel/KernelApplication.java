@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @SpringBootApplication
@@ -35,14 +36,16 @@ public class KernelApplication implements CommandLineRunner {
         String readerLoadClass = commandLine.getOptionValue("r");
         String writerLoadClass = commandLine.getOptionValue("w");
         Map<String, Object> setting = config(commandLine.getOptionValue("c"));
+        String condition = commandLine.getOptionValue("cd");
         // 初始化任务
-        LinkedBlockingQueue<Row> channel = new LinkedBlockingQueue<>(8);
+        LinkedBlockingQueue<Row> channel = new LinkedBlockingQueue<>(5);
+        BlockingQueue<String> status = new LinkedBlockingQueue<>(1);
         Thread readerThread = new Thread(()->{
             try {
                 Class<?> aClass = urlClassLoader.loadClass(readerLoadClass);
                 IReader reader = (IReader) aClass.getDeclaredConstructor().newInstance();
                 reader.init(setting);
-                reader.read(channel);
+                reader.read(channel, condition,status);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -50,15 +53,15 @@ public class KernelApplication implements CommandLineRunner {
 
         Thread writerThread = new Thread(()->{
             try {
-                Class<?> aClass = urlClassLoader.loadClass(writerLoadClass);
-                IWriter writer = (IWriter) aClass.getDeclaredConstructor().newInstance();
+                Class<?> aClass1 = urlClassLoader.loadClass(writerLoadClass);
+                IWriter writer = (IWriter) aClass1.getDeclaredConstructor().newInstance();
                 writer.init(setting);
-                writer.write(channel);
+                writer.write(channel,status);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
-        // 执行任务
+        //执行任务
         readerThread.setName("reader-t1");
         writerThread.setName("writer-t1");
         readerThread.start();
@@ -74,6 +77,7 @@ public class KernelApplication implements CommandLineRunner {
         options.addOption("r", "readerPackageName",true,"the name of reader Package");
         options.addOption("w", "writerPackageName",true,"the name of writer Package");
         options.addOption("c", "configPath",true,"the path of config");
+        options.addOption("cd", "whereCondition",true,"the condition of sql");
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;
         try {
@@ -97,8 +101,7 @@ public class KernelApplication implements CommandLineRunner {
             throw new RuntimeException("文件夹中没有数据");
         }
         URL[] urls = urlList.toArray(new URL[0]);
-        URLClassLoader urlClassLoader =new URLClassLoader(urls);
-        return urlClassLoader;
+        return new URLClassLoader(urls);
     }
 
     public Map<String, Object> config(String configLoadClassPath) throws Exception {
@@ -106,7 +109,6 @@ public class KernelApplication implements CommandLineRunner {
         File file = configLoadClassPathList[0];
         InputStream inputStream = new FileInputStream(file);
         Yaml yaml = new Yaml();
-        Map<String, Object> setting = yaml.load(inputStream);
-        return setting;
+        return yaml.load(inputStream);
     }
 }

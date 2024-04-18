@@ -8,10 +8,9 @@ import zone.yukai.rdt.common.Row;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class PostgresWriter implements IWriter {
@@ -19,18 +18,22 @@ public class PostgresWriter implements IWriter {
     String postgresUsername;
     String postgresPassword;
     String tableName;
+    Connection connection;
     @Override
-    public void init(Map<String, Object> setting) {
-        Set<String> strings = setting.keySet();
-        List<String> configList = new ArrayList<>(strings);
-        postgresUrl = (String) ((Map<String, Object>) setting.get(configList.get(1))).get("url");
-        postgresUsername = (String) ((Map<String, Object>) setting.get(configList.get(1))).get("username");
-        postgresPassword = (String) ((Map<String, Object>) setting.get(configList.get(1))).get("password");
-        tableName = (String) ((Map<String, Object>) setting.get(configList.get(1))).get("tableName");
+    public void init(Map<String, Object> setting) throws SQLException {
+        Iterator<String> iterator = setting.keySet().iterator();
+        iterator.next();
+        String key = iterator.next();
+        Map<String, Object> config = (Map<String, Object>) setting.get(key);
+        postgresUrl = (String) config.get("url");
+        postgresUsername = (String) config.get("username");
+        postgresPassword = (String) config.get("password");
+        tableName = (String) config.get("tableName");
+        connection = DriverManager.getConnection(postgresUrl, postgresUsername, postgresPassword);
     }
 
     @Override
-    public void write(LinkedBlockingQueue<Row> channel) {
+    public void write(LinkedBlockingQueue<Row> channel, BlockingQueue<String> status) {
         while (true){
             try {
                 Row row = channel.take();
@@ -69,12 +72,17 @@ public class PostgresWriter implements IWriter {
                     }
                 }
                 String sql = "INSERT INTO " + tableName + "("+columnName.toString()+")values("+columnValue.toString()+");";
-                Connection connection = DriverManager.getConnection(postgresUrl, postgresUsername, postgresPassword);
                 PreparedStatement preparedStatement = connection.prepareStatement(sql);
                 preparedStatement.execute();
 
-                connection.close();
                 preparedStatement.close();
+                if(channel.size() == 0){
+                    if("READER_OVER".equals(status.take())){
+                        connection.close();
+                        break;
+                    }
+                    break;
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -84,10 +92,11 @@ public class PostgresWriter implements IWriter {
     @Override
     public List<ConfigItem> getConfigItems() {
         List<ConfigItem> items = new ArrayList<>();
-        items.add(new ConfigItem("POSTGRES.URL","string","url"));
-        items.add(new ConfigItem("POSTGRES.USERNAME","string","用户名"));
-        items.add(new ConfigItem("POSTGRES.PASSWORD","string","密码"));
-        items.add(new ConfigItem("POSTGRES.TABLE_NAME","string","表名"));
+        items.add(new ConfigItem("MYSQL.URL","string","url"));
+        items.add(new ConfigItem("MYSQL.USERNAME","string","用户名"));
+        items.add(new ConfigItem("MYSQL.PASSWORD","string","密码"));
+        items.add(new ConfigItem("MYSQL.TABLE_NAME","String","表名"));
+        items.add(new ConfigItem("MYSQL.WHERE","String","查询语句"));
         return items;
     }
 }
