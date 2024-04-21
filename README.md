@@ -3,7 +3,7 @@
 rdt是一个数据库迁移的工具，旨在实现将数据从任意一款数据库读取并写入到任意一款数据库的功能。
 
 # 模块分析
-项目共有7个模块，启动项目需要有4个模块才能运行。其中common模块和kernel模块是必要模块，
+项目共有7个模块，启动项目需要有4个模块才能运行。其中common模块和kernel模块是必要模块，另外还需要一个读模块和一个写模块，具体使用哪一个模块没有限制。
 | 模块 | 介绍 |
 | ---- | ----|
 | common | 通用类，提供其他模块所需要的封装类和接口 |
@@ -30,6 +30,7 @@ java -jar rdt.jar -f D:\jar -r zone.yukai.rdt.PostgresReader -w zone.yukai.rdt.M
 | -c / --configPath | true | 数据库配置文件路径，参考格式： D:\readerConfig | 
 
 ## 配置文件格式
+配置文件使用yml格式，写法需要按照如下格式，其中数据库配置固定，第一个为MySQL数据库，第二个为Postgres数据库，第三个为csv文件的保存路径。
 > MySQLDatabase:  
 > > url : jdbc:mysql://xxx/xxx  
 > > username : yourUsername  
@@ -42,3 +43,5 @@ java -jar rdt.jar -f D:\jar -r zone.yukai.rdt.PostgresReader -w zone.yukai.rdt.M
 > > password : yourPassword  
 > > tableName: yourTableName
 
+> CSV:
+> > path : D:\xxx\output.csv
